@@ -374,6 +374,33 @@ module Spaceship
         TestFlight::Group.default_external_group(app_id: self.apple_id)
       end
 
+      def perform_for_groups_in_app(groups: nil, &block)
+        if groups.nil?
+          default_external_group = self.default_external_group
+          if default_external_group.nil?
+            UI.user_error!("The app #{self.name} does not have a default external group. Please make sure to pass group names to the `:groups` option.")
+          end
+          test_flight_groups = [default_external_group]
+        else
+          test_flight_groups = Spaceship::TestFlight::Group.filter_groups(app_id: self.apple_id) do |group|
+            groups.include?(group.name)
+          end
+
+          UI.user_error!("There are no groups available matching the names passed to the `:groups` option.") if test_flight_groups.empty?
+        end
+
+        test_flight_groups.each(&block)
+      end
+
+      # Could be moved out to app
+      def add_tester_to_groups!(tester: nil, groups: nil)
+        perform_for_groups_in_app(groups: groups) { |group| group.add_tester!(tester) }
+      end
+
+      def remove_tester_from_groups!(tester: nil, groups: nil)
+        perform_for_groups_in_app(groups: groups) { |group| group.remove_tester!(tester) }
+      end
+
       #####################################################
       # @!group Promo codes
       #####################################################
