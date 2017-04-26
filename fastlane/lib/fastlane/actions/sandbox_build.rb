@@ -5,12 +5,7 @@ module Fastlane
     end
 
     # Copies your project's artifacts into temprorary sandbox folder and runs specified build actions inside
-    class SandboxBuildAction < Action
-    	attr_accessor :clean
-    	attr_accessor :worker_block    	
-    	attr_accessor :project_dir    	
-    	attr_accessor :build_unique_id
-    	    	
+    class SandboxBuildAction < Action    	    	
       def self.run(params)
       	self.parse_params(params)
 				self.initialize_project_dir
@@ -113,10 +108,12 @@ module Fastlane
 			end
 			
 			def self.initialize_project_dir
-# 				if Dir.pwd.split('/').last != FASTLANE_DIR_NAME				
-#       		UI.user_error!("sandbox_build called from non-default directory")
-#       	end				
-# 				Dir.chdir("..")
+				@initial_working_dir = Dir.new(Dir.pwd)
+				if Dir.pwd.split('/').last == FASTLANE_DIR_NAME				
+					Dir.chdir("..")
+				elsif not Dir.exist?(FASTLANE_DIR_NAME)
+      		UI.user_error!("sandbox_build called from non-project and non-fastlane directory")
+      	end				
 	   		@project_dir = Dir.new(Dir.pwd)			
 			end
 			
@@ -152,7 +149,7 @@ module Fastlane
 					if @clean
 						FileUtils.remove_dir("#{BUILD_DIR_NAME}/#{@build_unique_id}")
 					end
-					Dir.chdir(FASTLANE_DIR_NAME)	
+					Dir.chdir(@initial_working_dir.path)	
 				end      
       end
     end
